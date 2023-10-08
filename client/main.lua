@@ -120,12 +120,28 @@ local onPlayerDead = false
 Citizen.CreateThread(function()
     while true do
         Wait(0)
-        while IsPlayerDead(PlayerId()) and not revived do
+        while IsPlayerDead(PlayerId()) and not revived do            
+            local data = {
+                showScreen = false,
+                labelAction = "",
+                labelOpponent = "",
+                labelPosse = "",
+                labelDeathCause = "",
+                labelPlayerKills = 0,
+                labelPlayerDeaths = 0,
+                showKillDeathRatio = false,
+                showHelpTextClone = false,
+                labelHelpTextClone = "",
+                showDeathCauseLines = false,
+                showPosseLines = false,
+                showOpponentLines = false,
+                variationId = 0
+            }
+            local DS = exports["qadr_ui"]:mpDeathScreen(data, GetCurrentResourceName())
             Wait(1)
             local timer = GetGameTimer()+Config.RespawnTime
             while timer >= GetGameTimer() and not revived do
                 if revived == false then
-
                     if onPlayerDead == false then
                         local DeathReason = "suicide"
                         local PedKiller = Citizen.InvokeNative(0x93C8B64DEB84728C, PlayerPedId()) -- _GET_PED_SOURCE_OF_DEATH
@@ -161,19 +177,29 @@ Citizen.CreateThread(function()
                         --Citizen.InvokeNative(0xFDB74C9CC54C3F37, 1.0)
                         TriggerServerEvent("redemrp_respawn:DeadTable", "add")
                         --AnimpostfxPlay("DeathFailMP01")
-                        StartDeathCam()
+                        --StartDeathCam()
                         onPlayerDead = true
                     end
 
                     Wait(1)
                     ProcessCamControls()
-                    DrawTxt(Config.LocaleTimer .. " " .. tonumber(string.format("%.0f", (((GetGameTimer() - timer) * -1)/1000))), 0.50, 0.80, 0.7, 0.7, true, 255, 255, 255, 255, true)
+                    local timer = Config.LocaleTimer .. " " .. tonumber(string.format("%.0f", (((GetGameTimer() - timer) * -1)/1000)))
+                    --DrawTxt(timer, 0.50, 0.80, 0.7, 0.7, true, 255, 255, 255, 255, true)
+                    local uData ={
+                        labelAction ="ENTER ALERT DOCTORS",
+                        labelDeathCause = "",
+                        showScreen = true,
+                        labelHelpTextClone = timer,
+                        showHelpTextClone = true,
+                    }
                     if not medicsAlerted then
-                        DrawTxt("[~pa~ENTER~q~] ALERT DOCTORS", 0.50, 0.85, 0.5, 0.5, true, 255, 255, 255, 255, true)
+                        --DrawTxt("[~pa~ENTER~q~] ALERT DOCTORS", 0.50, 0.85, 0.5, 0.5, true, 255, 255, 255, 255, true)
+                        
                     else
-                        DrawTxt("DOCTORS ALERTED", 0.50, 0.85, 0.5, 0.5, true, 255, 255, 255, 255, true)
+                        uData.labelAction ="DOCTORS ALERTED"
+                        --DrawTxt("DOCTORS ALERTED", 0.50, 0.85, 0.5, 0.5, true, 255, 255, 255, 255, true)
                     end
-
+                    DS:update(uData)
                     if IsControlJustReleased(0, 0xC7B5340A) and not medicsAlerted then
                         medicsAlerted = true
                         TriggerServerEvent("redemrp_doctorjob:server:AlertDead")
@@ -187,21 +213,32 @@ Citizen.CreateThread(function()
             while true do
                 Wait(0)
                 ProcessCamControls()
+                local uData = {}
                 if not ConfirmingRespawn then
-                    DrawTxt("Press E to Respawn", 0.50, 0.45, 0.8, 0.8, true, 255, 255, 255, 255, true)
+                    uData.labelAction =""
+                    uData.labelOpponent ="Press E to Respawn"
+                    uData.labelPosse = ""
+                    uData.labelDeathCause = ""      
+                    uData.showHelpTextClone = false        
+                    --DrawTxt("Press E to Respawn", 0.50, 0.45, 0.8, 0.8, true, 255, 255, 255, 255, true)
                 else
-                    DrawTxt("Are you sure~n~you want to respawn?~n~(~pa~E~q~) Yes~n~(~pa~BACKSPACE~q~) No", 0.50, 0.45, 0.8, 0.8, true, 255, 255, 255, 255, true)
+                    uData.labelAction =""
+                    uData.labelOpponent ="Are you sure you want to respawn?"
+                    uData.labelPosse = "(E) Yes (BACKSPACE) No"
+                    uData.labelDeathCause = ""
+                    --DrawTxt("Are you sure~n~you want to respawn?~n~(~pa~E~q~) Yes~n~(~pa~BACKSPACE~q~) No", 0.50, 0.45, 0.8, 0.8, true, 255, 255, 255, 255, true)
                 end
+                DS:update(uData)
                 if IsControlJustReleased(0, 0xDFF812F9) then
                     if not ConfirmingRespawn then
                         ConfirmingRespawn = true
                     else
-                        medicsAlerted = false
-                        
+                        medicsAlerted = false                        
                         respawn()
                         revived = false
                         onPlayerDead = false
                         TriggerServerEvent("redemrp_respawn:DeadTable", "remove")
+                        ConfirmingRespawn = false
                         break
                     end
                 end
