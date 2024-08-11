@@ -140,6 +140,7 @@ Citizen.CreateThread(function()
             local DS = exports["qadr_ui"]:mpDeathScreen(data, GetCurrentResourceName())
             Wait(1)
             local timer = GetGameTimer()+Config.RespawnTime
+            local dataupdated = false
             while timer >= GetGameTimer() and not revived do
                 if revived == false then
                     if onPlayerDead == false then
@@ -183,23 +184,41 @@ Citizen.CreateThread(function()
 
                     Wait(1)
                     ProcessCamControls()
-                    local timer = Config.LocaleTimer .. " " .. tonumber(string.format("%.0f", (((GetGameTimer() - timer) * -1)/1000)))
-                    --DrawTxt(timer, 0.50, 0.80, 0.7, 0.7, true, 255, 255, 255, 255, true)
-                    local uData ={
-                        labelAction ="ENTER ALERT DOCTORS",
-                        labelDeathCause = "",
-                        showScreen = true,
-                        labelHelpTextClone = timer,
-                        showHelpTextClone = true,
-                    }
-                    if not medicsAlerted then
-                        --DrawTxt("[~pa~ENTER~q~] ALERT DOCTORS", 0.50, 0.85, 0.5, 0.5, true, 255, 255, 255, 255, true)
-                        
-                    else
-                        uData.labelAction ="DOCTORS ALERTED"
-                        --DrawTxt("DOCTORS ALERTED", 0.50, 0.85, 0.5, 0.5, true, 255, 255, 255, 255, true)
+                    if not dataupdated then
+                        local timer = Config.LocaleTimer .. " " .. tonumber(string.format("%.0f", (((GetGameTimer() - timer) * -1)/1000)))
+                        --DrawTxt(timer, 0.50, 0.80, 0.7, 0.7, true, 255, 255, 255, 255, true)
+                        local uData ={
+                            labelAction ="ENTER ALERT DOCTORS",
+                            labelDeathCause = "",
+                            showScreen = true,
+                            labelHelpTextClone = timer,
+                            showHelpTextClone = true,
+                        }
+                        if not medicsAlerted then
+                            --DrawTxt("[~pa~ENTER~q~] ALERT DOCTORS", 0.50, 0.85, 0.5, 0.5, true, 255, 255, 255, 255, true)
+                            
+                        else
+                            uData.labelAction ="DOCTORS ALERTED"
+                            --DrawTxt("DOCTORS ALERTED", 0.50, 0.85, 0.5, 0.5, true, 255, 255, 255, 255, true)
+                        end
+                        dataupdated = true
+                        DS:update(uData)
+                        Citizen.CreateThread(function()
+                            while true do 
+                                Wait(1000)
+                                Config.RespawnTime = tonumber(Config.RespawnTime-1000)
+                                local time = tonumber(string.format("%.0f", tonumber(Config.RespawnTime/1000)))
+                                local timer = Config.LocaleTimer .. " " .. time
+                                local uData ={
+                                    labelHelpTextClone = timer
+                                }
+                                DS:update(uData)
+                                if time == 0 then
+                                    break
+                                end
+                            end
+                        end)
                     end
-                    DS:update(uData)
                     if IsControlJustReleased(0, 0xC7B5340A) and not medicsAlerted then
                         medicsAlerted = true
                         TriggerServerEvent("redemrp_doctorjob:server:AlertDead")
@@ -210,6 +229,7 @@ Citizen.CreateThread(function()
                     break
                 end
             end
+            dataupdated = false
             while true do
                 Wait(0)
                 ProcessCamControls()
@@ -227,6 +247,10 @@ Citizen.CreateThread(function()
                     uData.labelPosse = "(E) Yes (BACKSPACE) No"
                     uData.labelDeathCause = ""
                     --DrawTxt("Are you sure~n~you want to respawn?~n~(~pa~E~q~) Yes~n~(~pa~BACKSPACE~q~) No", 0.50, 0.45, 0.8, 0.8, true, 255, 255, 255, 255, true)
+                end
+                if not dataupdated then
+                    dataupdated = true
+                    DS:update(uData)
                 end
                 DS:update(uData)
                 if IsControlJustReleased(0, 0xDFF812F9) then
