@@ -138,7 +138,6 @@ Citizen.CreateThread(function()
                 variationId = 0
             }
             local DS = exports["qadr_ui"]:mpDeathScreen(data, GetCurrentResourceName())
-            Wait(1)
             local timer = GetGameTimer()+Config.RespawnTime
             local dataupdated = false
             while timer >= GetGameTimer() and not revived do
@@ -204,16 +203,17 @@ Citizen.CreateThread(function()
                         dataupdated = true
                         DS:update(uData)
                         Citizen.CreateThread(function()
+                            local tempCount = tonumber(Config.RespawnTime)
                             while true do 
                                 Wait(1000)
-                                Config.RespawnTime = tonumber(Config.RespawnTime-1000)
-                                local time = tonumber(string.format("%.0f", tonumber(Config.RespawnTime/1000)))
+                                tempCount = tempCount - 1000
+                                local time = tonumber(string.format("%.0f", tonumber(tempCount/1000)))
                                 local timer = Config.LocaleTimer .. " " .. time
                                 local uData ={
                                     labelHelpTextClone = timer
                                 }
                                 DS:update(uData)
-                                if time == 0 then
+                                if time < 0 then
                                     break
                                 end
                             end
@@ -252,10 +252,10 @@ Citizen.CreateThread(function()
                     dataupdated = true
                     DS:update(uData)
                 end
-                DS:update(uData)
                 if IsControlJustReleased(0, 0xDFF812F9) then
                     if not ConfirmingRespawn then
                         ConfirmingRespawn = true
+                        dataupdated = false
                     else
                         medicsAlerted = false                        
                         respawn()
@@ -269,6 +269,7 @@ Citizen.CreateThread(function()
                 if IsControlJustReleased(0, 0x156F7119) then
                     if ConfirmingRespawn then
                         ConfirmingRespawn = false
+                        dataupdated = false
                     end
                 end
                 if revived then
